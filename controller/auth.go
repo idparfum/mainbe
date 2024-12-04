@@ -22,8 +22,20 @@ func RegisterCustomer(c *fiber.Ctx) error {
 		})
 	}
 
+	// Validasi id user
+	if user.IdUser != 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Id user tidak boleh kosong",
+		})
+	}
+
 	// Menyimpan data user ke database
 	if err := repo.CreateCustomer(db, &user); err != nil {
+		if err.Error() == "invalid phone number format" || err.Error() == "invalid email format" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"message": err.Error(),
+			})
+		}
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "Registrasi Gagal",
 		})
@@ -46,8 +58,20 @@ func RegisterSeller(c *fiber.Ctx) error {
 		})
 	}
 
+	// Validasi id user
+	if user.IdUser != 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Id user tidak boleh kosong",
+		})
+	}
+
 	// Menyimpan data user ke database
-	if err := repo.CreateSeller(db, &user); err != nil {
+	if err := repo.CreateCustomer(db, &user); err != nil {
+		if err.Error() == "invalid phone number format" || err.Error() == "invalid email format" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"message": err.Error(),
+			})
+		}
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "Registrasi Gagal",
 		})
@@ -74,14 +98,14 @@ func Login(c *fiber.Ctx) error {
 	userData, err := repo.GetUserByUsername(db, user.Nama)
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-			"message": "Username atau password salah",
+			"message": "Username salah",
 		})
 	}
 
 	// Check password
 	if err := bcrypt.CompareHashAndPassword([]byte(userData.Password), []byte(user.Password)); err != nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"message": "Username atau password salah",
+			"message": "password salah",
 		})
 	}
 
@@ -120,15 +144,13 @@ func GetMyProfile(c *fiber.Ctx) error {
 
 	// Ekstrak claims dari token
 	claims := token.Claims.(jwt.MapClaims)
-	userID := claims["id_user"].(float64)
+	userId := uint(claims["id_user"].(float64))
 	db := c.Locals("db").(*gorm.DB)
 
 	// Get user by ID
-	userData, err := repo.GetUserById(db, int(userID))
+	userData, err := repo.GetUserById(db, userId)
 	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-			"message": "User not found",
-		})
+		return err
 	}
 
 	return c.JSON(fiber.Map{

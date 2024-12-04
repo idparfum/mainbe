@@ -1,14 +1,12 @@
 package repository
 
 import (
-	// "github.com/dgrijalva/jwt-go"
 	"mainbe/model"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
-	// "time"
 )
 
 func CreateCustomer(db *gorm.DB, user *model.User) error {
@@ -18,6 +16,16 @@ func CreateCustomer(db *gorm.DB, user *model.User) error {
 		return err
 	}
 	user.Password = string(hashedPassword)
+
+	// Validasi phone
+	if err := ValidatePhone(user.Phone); err != nil {
+		return err
+	}
+
+	// Validasi email
+	if err := ValidateEmail(user.Email); err != nil {
+		return err
+	}
 
 	// Jika id role tidak diisi, maka set default role ke 3
 	if user.IdRole == 0 {
@@ -39,6 +47,16 @@ func CreateSeller(db *gorm.DB, user *model.User) error {
 		return err
 	}
 	user.Password = string(hashedPassword)
+
+	// Validasi phone
+	if err := ValidatePhone(user.Phone); err != nil {
+		return err
+	}
+
+	// Validasi email
+	if err := ValidateEmail(user.Email); err != nil {
+		return err
+	}
 
 	// Jika id role tidak diisi, maka set default role ke 2
 	if user.IdRole == 0 {
@@ -73,24 +91,26 @@ func GenerateToken(user *model.User) (string, error) {
 	return tokenString, nil
 }
 
-func GetUserByUsername(db *gorm.DB, username string) (model.User, error) {
+func GetUserByUsername(db *gorm.DB, nama string) (*model.User, error) {
 	var user model.User
 
-	if err := db.Where("username = ?", username).First(&user).Error; err != nil {
-		return user, err
+	result := db.Where("nama = ?", nama).First(&user)
+	if result.Error != nil {
+		return nil, result.Error
 	}
 
-	return user, nil
+	return &user, nil
 }
 
-func GetUserById(db *gorm.DB, idUser int) (model.User, error) {
+func GetUserById(db *gorm.DB, userID uint) (*model.User, error) {
 	var user model.User
 
-	if err := db.First(&user, idUser).Error; err != nil {
-		return user, err
+	result := db.First(&user, userID)
+	if result.Error != nil {
+		return nil, result.Error
 	}
 
-	return user, nil
+	return &user, nil
 }
 
 func GetUserByEmail(db *gorm.DB, email string) (model.User, error) {
