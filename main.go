@@ -1,17 +1,18 @@
 package main
 
 import (
+	"mainbe/config"
+	"mainbe/routes"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
-	"mainbe/config"
-	"mainbe/routes"
 )
 
 func main() {
 	// Create new fiber app
 	app := fiber.New()
-	
+
 	// Connect to database
 	db := config.GetDB()
 

@@ -7,24 +7,24 @@ import (
 )
 
 type User struct {
-	IdUser 	  uint 	 	`gorm:"primaryKey;column:id_user" json:"id_user"`
-	Nama 	  string 	`gorm:"colum:nama" json:"nama"`
-	Email 	  string 	`gorm:"colum:email" json:"email"`
-	Phone 	  string 	`gorm:"colum:phone" json:"phone"`
-	Password  string 	`gorm:"colum:password" json:"password"`
-	IdRole 	  int 	 	`gorm:"colum:id_role" json:"id_role"`
-	CreatedAt time.Time `gorm:"colum:created_at" json:"created_at"`
-	UpdatedAt time.Time `gorm:"colum:updated_at" json:"updated_at"`
+	IdUser    uint      `gorm:"primaryKey;column:id_user" json:"id_user"`
+	Nama      string    `gorm:"column:nama" json:"nama"`
+	Email     string    `gorm:"column:email" json:"email"`
+	Phone     string    `gorm:"column:phone" json:"phone"`
+	Password  string    `gorm:"column:password" json:"password"`
+	IdRole    int       `gorm:"column:id_role" json:"id_role"`
+	CreatedAt time.Time `gorm:"column:created_at" json:"created_at"`
+	UpdatedAt time.Time `gorm:"column:updated_at" json:"updated_at"`
 }
 
 type Role struct {
-	IdRole 	  int 	 	`gorm:"primaryKey;colum:id_role" json:"id_role"`
-	NamaRole  string 	`gorm:"colum:nama_role" json:"nama_role"`
-	CreatedAt time.Time `gorm:"colum:created_at" json:"created_at"`
+	IdRole    int       `gorm:"primaryKey;column:id_role" json:"id_role"`
+	NamaRole  string    `gorm:"column:nama_role" json:"nama_role"`
+	CreatedAt time.Time `gorm:"column:created_at" json:"created_at"`
 }
 
 type JWTClaims struct {
 	jwt.StandardClaims
 	IdUser uint `json:"id_user"`
-	IdRole int `json:"id_role"`
+	IdRole int  `json:"id_role"`
 }

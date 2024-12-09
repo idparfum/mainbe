@@ -2,6 +2,7 @@ package repository
 
 import (
 	"mainbe/model"
+	"mainbe/utils"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -10,6 +11,9 @@ import (
 )
 
 func CreateCustomer(db *gorm.DB, user *model.User) error {
+	// Generate random ID before creating user
+	user.IdUser = utils.GenerateRandomID(1, 10000) // ID acak antara 1 dan 10000
+
 	// Hash password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
@@ -41,6 +45,9 @@ func CreateCustomer(db *gorm.DB, user *model.User) error {
 }
 
 func CreateSeller(db *gorm.DB, user *model.User) error {
+	// Generate random ID before creating user
+	user.IdUser = utils.GenerateRandomID(1, 10000) // ID acak antara 1 dan 10000
+
 	// Hash password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
@@ -71,25 +78,22 @@ func CreateSeller(db *gorm.DB, user *model.User) error {
 	return nil
 }
 
-func GenerateToken(user *model.User) (string, error) {
-	// Set claims
-	claims := &model.JWTClaims{
-		IdUser: user.IdUser,
-		IdRole: user.IdRole,
-		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(time.Hour).Unix(),
-		},
+func GenerateToken(userID uint) (string, error) {
+	claims := jwt.MapClaims{
+		"id_user": userID,  // Pastikan ID yang valid digunakan di sini
+		"exp":    time.Now().Add(time.Hour * 24).Unix(),  // Token berlaku selama 1 hari
 	}
 
-	// Generate token
+	// Generate token dengan claims yang sudah disiapkan
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString([]byte("secret_key"))
+	tokenString, err := token.SignedString([]byte("secret"))
 	if err != nil {
 		return "", err
 	}
 
 	return tokenString, nil
 }
+
 
 func GetUserByUsername(db *gorm.DB, nama string) (*model.User, error) {
 	var user model.User

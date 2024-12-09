@@ -4,7 +4,6 @@ import (
 	"mainbe/model"
 	repo "mainbe/repository"
 
-	"github.com/dgrijalva/jwt-go"
 	"github.com/gofiber/fiber/v2"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
@@ -22,10 +21,10 @@ func RegisterCustomer(c *fiber.Ctx) error {
 		})
 	}
 
-	// Validasi id user
+	// Validasi id user (id user akan digenerate, jadi pastikan kosong)
 	if user.IdUser != 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "Id user tidak boleh kosong",
+			"message": "Id user tidak boleh diisi, id akan digenerate otomatis",
 		})
 	}
 
@@ -45,6 +44,7 @@ func RegisterCustomer(c *fiber.Ctx) error {
 		"message": "Registrasi Berhasil!",
 	})
 }
+
 
 func RegisterSeller(c *fiber.Ctx) error {
 	var user model.User
@@ -58,15 +58,15 @@ func RegisterSeller(c *fiber.Ctx) error {
 		})
 	}
 
-	// Validasi id user
+	// Validasi id user (id user akan digenerate, jadi pastikan kosong)
 	if user.IdUser != 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "Id user tidak boleh kosong",
+			"message": "Id user tidak boleh diisi, id akan digenerate otomatis",
 		})
 	}
 
 	// Menyimpan data user ke database
-	if err := repo.CreateCustomer(db, &user); err != nil {
+	if err := repo.CreateSeller(db, &user); err != nil {
 		if err.Error() == "invalid phone number format" || err.Error() == "invalid email format" {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"message": err.Error(),
@@ -81,6 +81,7 @@ func RegisterSeller(c *fiber.Ctx) error {
 		"message": "Registrasi Berhasil!",
 	})
 }
+
 
 func Login(c *fiber.Ctx) error {
 	var user model.User
@@ -105,55 +106,43 @@ func Login(c *fiber.Ctx) error {
 	// Check password
 	if err := bcrypt.CompareHashAndPassword([]byte(userData.Password), []byte(user.Password)); err != nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"message": "password salah",
+			"message": "Password salah",
 		})
 	}
 
-	// Generate token
-	token, err := repo.GenerateToken(&user)
+	// Generate token with the user ID from the database (userData.ID)
+	token, err := repo.GenerateToken(userData.IdUser)  // Pass the actual user ID from the DB
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "Generate token failed",
 		})
 	}
 
+	// Return the token in the response
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"token": token,
 	})
 }
 
+
+
 func GetMyProfile(c *fiber.Ctx) error {
-	// Get token from header
-	tokenString := c.Get("login")
-	if tokenString == "" {
-		return fiber.NewError(fiber.StatusNotFound, "Token not found")
-	}
+	// Ambil claims dari Locals
+	claims := c.Locals("claims").(*model.JWTClaims)
 
-	// Parse token
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		return []byte("secret_key"), nil
-	})
-	if err != nil {
-		return err
-	}
+	// Ambil user ID dari claims
+	userId := claims.IdUser
 
-	// Memeriksa apakah token valid
-	if !token.Valid {
-		return fiber.NewError(fiber.StatusBadRequest, "Token invalid")
-	}
-
-	// Ekstrak claims dari token
-	claims := token.Claims.(jwt.MapClaims)
-	userId := uint(claims["id_user"].(float64))
+	// Ambil database instance dari Locals
 	db := c.Locals("db").(*gorm.DB)
 
-	// Get user by ID
-	userData, err := repo.GetUserById(db, userId)
+	// Cari data user berdasarkan ID
+	user, err := repo.GetUserById(db, userId)
 	if err != nil {
-		return err
+		return fiber.NewError(fiber.StatusNotFound, "User tidak ditemukan")
 	}
 
 	return c.JSON(fiber.Map{
-		"user": userData,
+		"user": user,
 	})
 }
