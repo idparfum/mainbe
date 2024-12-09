@@ -40,7 +40,7 @@ func RegisterCustomer(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message": "Registrasi Berhasil!",
 	})
 }
@@ -77,7 +77,7 @@ func RegisterSeller(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message": "Registrasi Berhasil!",
 	})
 }
